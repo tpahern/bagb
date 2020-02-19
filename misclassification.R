@@ -6,7 +6,6 @@ library(tidyverse)
 library(reshape2)
 library(MASS)
 
-setwd("/Users/tomahern/Dropbox/Projects/NLM/reproducibility/Manuscripts/Bias analysis gone bad/bagb_shiny")
 rm(list=ls())
 cat("\014") #clears console
 
