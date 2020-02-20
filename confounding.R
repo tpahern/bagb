@@ -1,4 +1,4 @@
-# Simple bias analysis for unmeasured confounder - Morsch et. al.
+# Simple bias analysis for unmeasured confounder - Mørch et. al.
 
 rm(list=ls())
 cat("\014") # clears console
