@@ -51,7 +51,7 @@ summary(or_bias_rand)
 
 # get 2.5th, 50th, and 97.5th percentiles
 cat("Systematic error:", "\n")
-quantile(or.bias, probs=c(0.025, 0.5, 0.975))
+quantile(or_bias, probs=c(0.025, 0.5, 0.975))
 
 cat("Systematic + random error:", "\n")
-quantile(or.bias.rand, probs=c(0.025, 0.5, 0.975))
+quantile(or_bias_rand, probs=c(0.025, 0.5, 0.975))
