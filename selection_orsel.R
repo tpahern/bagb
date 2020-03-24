@@ -55,3 +55,8 @@ quantile(or_bias, probs=c(0.025, 0.5, 0.975))
 
 cat("Systematic + random error:", "\n")
 quantile(or_bias_rand, probs=c(0.025, 0.5, 0.975))
+
+# also divide by the relative risk due to confounding adjust for confounding
+rrc <- 1.94
+cat("Systematic + random error; adjusted for confounding:", "\n")
+quantile(or_bias_rand, probs=c(0.025, 0.5, 0.975)) / rrc
