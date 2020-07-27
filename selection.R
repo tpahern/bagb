@@ -55,8 +55,31 @@ quantile(or_bias, probs=c(0.025, 0.5, 0.975))
 
 cat("Systematic + random error:", "\n")
 quantile(or_bias_rand, probs=c(0.025, 0.5, 0.975))
+ucl95_or_bias_rand <- quantile(or_bias_rand, 0.975)
+lcl95_or_bias_rand <- quantile(or_bias_rand, 0.025)
 
-# also divide by the relative risk due to confounding adjust for confounding
+# Now correct for bias due to confounding:
+#  apply the Greenland & Mickey variance adjustment
 rrc <- 1.94
+
+# variance of the confounding-adjusted OR
+v_log_oradj <- ((log(4.1)-log(2.2))/(2*1.96))^2
+
+# variance of the crude OR (=6.2; see paper for explanation)
+v_log_orcrude <- ((log(8.2)-log(4.8))/(2*1.96))^2
+
+# calculate variance of the RRc
+v_rrc <- v_log_oradj - v_log_orcrude
+
+# variance of or_bias_rand
+v_or_bias_rand <- ((log(ucl95_or_bias_rand)-log(lcl95_or_bias_rand))/(2*1.96))^2
+
+# variance when adjusting for RRc
+v_final <- v_or_bias_rand + v_rrc
+
+# adjust point estimate for confounding
+or_bias_rand_conf <- quantile(or_bias_rand, 0.5)/rrc
+lcl95_or_bias_rand_conf <- exp(log(or_bias_rand_conf) - (1.96*sqrt(v_final)))
+ucl95_or_bias_rand_conf <- exp(log(or_bias_rand_conf) + (1.96*sqrt(v_final)))
 cat("Systematic + random error; adjusted for confounding:", "\n")
-quantile(or_bias_rand, probs=c(0.025, 0.5, 0.975)) / rrc
+cat("OR =",round(or_bias_rand_conf,2),", 95% SI: ",round(lcl95_or_bias_rand_conf,2),",",round(ucl95_or_bias_rand_conf,2))
