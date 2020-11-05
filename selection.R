@@ -1,12 +1,11 @@
 # DiForti - probabilistic bias analysis for selection bias
-# - Tom Ahern (02tahern@med.uvm.edu)
-# - 2020-02-19
+# - Tom Ahern (02tahern@med.uvm.edu) & Tim Lash (tlash@emory.edu)
+# - 2020-11-05
 
 rm(list=ls())
 cat("\014") # clears console
+library(triangle)
 
-# - probabilistic bias analysis 
-# - use log-normal distribution for selection odds ratio
 
 # DiForti et. al. observed data
 a <- 266
@@ -17,31 +16,39 @@ d <- 1153
 or_crude <- (a/c)/(b/d)
 se_crude <- sqrt(1/a+1/b+1/c+1/d)
 
-# user-defined selection proportions in joint exposure (x) and outcome (y) categories
-x1y1 <- 0.58
-x1y0 <- 0.18
-x0y1 <- 0.60
-x0y0 <- 0.31
-
-# calculate the bias factor
-or_sel <- (x1y1/x1y0)/(x0y1/x0y0)
-sd <- 0.21 # adopting value used by DiForti, but can be modified
-
-# calculate location and shape to use with rlnorm
-# https://msalganik.wordpress.com/2017/01/21/making-sense-of-the-rlnorm-function-in-r/
-location <- log(or_sel^2 / sqrt(sd^2 + or_sel^2))
-shape <- sqrt(log(1 + (sd^2 / or_sel^2)))
-
-# draw or.sel values from the distribution, display, and summarize
 set.seed(2718)
 niter <- 100000
-or_sel_draw <- rlnorm(niter, location, shape)
-hist(or_sel_draw, breaks=100, xlim=c(0.8, 3), main="Distribution of drawn selection ORs")
-summary(or_sel_draw)
+
+#draw participation proportion ratio controls to cases (fixed 2.5 originally)
+part_ratio <- rltriangle(niter,0.9,3.9,2.5)
+case_p_rate=389/(389+229+901)
+
+#total controls
+control_t <- 1499*part_ratio*case_p_rate/(1-part_ratio*case_p_rate)
+
+#draw exposure prevalence ratio for cases (fixed 1.1 originally)
+case_e_ratio <- rltriangle(niter,0.23,2,1.1)
+
+#compute number of exposed cases among non-participants
+cases_e_nonp <- a/(a+b)*389*case_e_ratio
+
+#draw exposure prevalence ratio for controls (fixed 2.0 originally)
+control_e_ratio <- rltriangle(niter,0.9,8.7,2)
+#compute number of exposed controls among non-participants
+controls_e_nonp <- c/(c+d)*control_t*control_e_ratio
+
+#compute selection factor
+x1y1 <- a/(a+229*a/(a+b)+cases_e_nonp)
+x1y0 <- c/(c+262*c/(c+d)+controls_e_nonp)
+x0y1 <- b/(b+229*b/(a+b)+(389-cases_e_nonp))
+x0y0 <- d/(d+262*d/(c+d)+(control_t-1499-controls_e_nonp))
+
+# calculate the bias factor
+or_sel_draw <- (x1y1/x1y0)/(x0y1/x0y0)
 
 # calculate vector of bias-adjusted odds ratios
 or_bias <- or_crude/or_sel_draw
-hist(or_bias, breaks=100, xlim=c(1.5,7), main="Distribution of selection bias-adjusted ORs")
+hist(or_bias, breaks=100, xlim=c(0,7), main="Distribution of selection bias-adjusted ORs")
 summary(or_bias)
 
 # re-incorporate random error
